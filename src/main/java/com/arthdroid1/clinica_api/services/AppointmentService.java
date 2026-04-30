@@ -3,7 +3,6 @@ package com.arthdroid1.clinica_api.services;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arthdroid1.clinica_api.dtos.AppointmentRequestDTO;
@@ -25,15 +24,16 @@ import com.arthdroid1.clinica_api.repositories.ProfessionalRepository;
 
 @Service
 public class AppointmentService {
+
+	private final AppointmentRepository appointmentRepository;
+	private final ProfessionalRepository professionalRepository;
+	private final PatientRepository patientRepository;
 	
-	@Autowired
-	private AppointmentRepository appointmentRepository;
-	
-	@Autowired
-	private ProfessionalRepository professionalRepository;
-	
-	@Autowired
-	private PatientRepository patientRepository;
+	public AppointmentService(AppointmentRepository appointmentRepository, ProfessionalRepository professionalRepository, PatientRepository patientRepository) {
+		this.appointmentRepository = appointmentRepository;
+		this.patientRepository = patientRepository;
+		this.professionalRepository = professionalRepository;
+	}
 	
 	public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto){
 		validateDate(dto.dateTime());

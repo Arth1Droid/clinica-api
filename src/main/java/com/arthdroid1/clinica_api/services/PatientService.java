@@ -15,8 +15,11 @@ import com.arthdroid1.clinica_api.repositories.PatientRepository;
 @Service
 public class PatientService {
 	
-	@Autowired
-	private PatientRepository patientRepository;
+	private final PatientRepository patientRepository;
+	
+	public PatientService(PatientRepository patientRepository) {
+		this.patientRepository = patientRepository;
+	}
 	
 	public PatientResponseDTO registerPatient(PatientRequestDTO dto) {
 
