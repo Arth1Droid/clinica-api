@@ -3,6 +3,7 @@ package com.arthdroid1.clinica_api.models.entities;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,9 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 @Entity
 @Table(name = "tb_patient")
@@ -21,18 +19,17 @@ public class Patient implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@NotBlank
+
 	@Column(name = "name", nullable = false)
 	private String name;
-	@NotBlank
+
 	@Email(message = "the email field must contain a valid email")
 	@Column(name = "email", nullable = false, unique = true)
 	private String email;
-	@Pattern(regexp = "\\d{10,11}", message = "Invalid phone number")
+
 	@Column(name = "telephone", nullable = false)
-	@NotBlank
 	private String telephone;
-	@NotNull
+	
 	@Column(name = "birth_date", nullable = false)
 	private LocalDate birthDate;
 

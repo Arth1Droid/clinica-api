@@ -6,13 +6,22 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.arthdroid1.clinica_api.dtos.AppointmentRequestDTO;
+import com.arthdroid1.clinica_api.dtos.AppointmentResponseDTO;
 import com.arthdroid1.clinica_api.exceptions.AppointmentDateException;
 import com.arthdroid1.clinica_api.exceptions.AppointmentNotFoundException;
 import com.arthdroid1.clinica_api.exceptions.InvalidAppointmentStateException;
+import com.arthdroid1.clinica_api.exceptions.PatientNotFoundException;
+import com.arthdroid1.clinica_api.exceptions.ProfessionalNotFoundException;
 import com.arthdroid1.clinica_api.exceptions.ScheduleUnavailableException;
+import com.arthdroid1.clinica_api.mappers.AppointmentMapper;
 import com.arthdroid1.clinica_api.models.entities.Appointment;
+import com.arthdroid1.clinica_api.models.entities.Patient;
+import com.arthdroid1.clinica_api.models.entities.Professional;
 import com.arthdroid1.clinica_api.models.entities.enums.AppointmentStatus;
 import com.arthdroid1.clinica_api.repositories.AppointmentRepository;
+import com.arthdroid1.clinica_api.repositories.PatientRepository;
+import com.arthdroid1.clinica_api.repositories.ProfessionalRepository;
 
 @Service
 public class AppointmentService {
@@ -20,49 +29,74 @@ public class AppointmentService {
 	@Autowired
 	private AppointmentRepository appointmentRepository;
 	
-	public Appointment createAppointment(Appointment newAppointment){
-		validateDate(newAppointment);
+	@Autowired
+	private ProfessionalRepository professionalRepository;
+	
+	@Autowired
+	private PatientRepository patientRepository;
+	
+	public AppointmentResponseDTO createAppointment(AppointmentRequestDTO dto){
+		validateDate(dto.dateTime());
 	    
-	    boolean isProfessionalBusy = appointmentRepository.existsByProfessionalIdAndDateTimeAndStatusNot(
-	    		newAppointment.getProfessional().getId(), newAppointment.getDateTime(), 
-	    		AppointmentStatus.CANCELED);
-	    
-	    boolean isPatientBusy = appointmentRepository.existsByPatientIdAndDateTimeAndStatusNot(
-	    		newAppointment.getPatient().getId(), newAppointment.getDateTime(), 
-	    		AppointmentStatus.CANCELED);
-	    
-	    if(isProfessionalBusy || isPatientBusy) {
-	    	throw new ScheduleUnavailableException("Schedule unavailable");
-	    }
-	    
-		return  appointmentRepository.save(newAppointment);
+		Patient patient = patientRepository.findById(dto.patientId())
+                .orElseThrow(() -> new PatientNotFoundException("Patient not found"));
+        
+        Professional professional = professionalRepository.findById(dto.professionalId())
+                .orElseThrow(() -> new ProfessionalNotFoundException("Professional not found"));
+        
+        validateAvailability(dto, professional.getId(), patient.getId());
+       
+        Appointment appointment = new Appointment(
+                patient,
+                professional,
+                dto.dateTime(),
+                dto.type()
+        );
+        
+        Appointment saved = appointmentRepository.save(appointment);
+        return AppointmentMapper.toResponse(saved);
 	}
-	public List<Appointment> listAppointments(Long patientId, Long professionalId, AppointmentStatus satus){
-		return appointmentRepository.findWithFilters(patientId, professionalId, satus);
+	public List<AppointmentResponseDTO> listAppointments(Long patientId, Long professionalId, AppointmentStatus status){
+		return appointmentRepository.findWithFilters(patientId, professionalId, status)
+                .stream()
+                .map(AppointmentMapper::toResponse) 
+                .toList();
 		
 	}
 	
 	public void cancelAppointment(Long id, String reason) {
 		Appointment existentAppointment = appointmentRepository.findById(id)
 				.orElseThrow(() -> new AppointmentNotFoundException("Appointment not found"));
-		AppointmentStatus status = existentAppointment.getStatus();
 		
-		if(status == AppointmentStatus.CANCELED || status== AppointmentStatus.FINISHED) {
-			throw new InvalidAppointmentStateException("Cannot cancel an appointment that is already canceled or finished.");
-		}
-		if (reason == null || reason.isBlank()) {
-		    throw new InvalidAppointmentStateException("Cancellation reason is required");
-		}
+		if (existentAppointment.getStatus() != AppointmentStatus.SCHEDULED) {
+            throw new InvalidAppointmentStateException("Only scheduled appointments can be canceled.");
+        }
+
+        if (reason == null || reason.isBlank()) {
+            throw new InvalidAppointmentStateException("Cancellation reason is required");
+        }
 		
 		existentAppointment.cancel(reason);
 		appointmentRepository.save(existentAppointment);
 	}
 	
-	private void validateDate(Appointment appointment) {
-	    if (!appointment.getDateTime().isAfter(LocalDateTime.now())) {
-	        throw new AppointmentDateException("The appointment must be in the future");
-	    }
+	private void validateDate(LocalDateTime dateTime) {
+		if (!dateTime.isAfter(LocalDateTime.now())) {
+            throw new AppointmentDateException("The appointment must be in the future");
+        }
 	}
+	
+	private void validateAvailability(AppointmentRequestDTO dto, Long profId, Long patientId) {
+        boolean isProfessionalBusy = appointmentRepository.existsByProfessionalIdAndDateTimeAndStatusNot(
+                profId, dto.dateTime(), AppointmentStatus.CANCELED);
+
+        boolean isPatientBusy = appointmentRepository.existsByPatientIdAndDateTimeAndStatusNot(
+                patientId, dto.dateTime(), AppointmentStatus.CANCELED);
+
+        if (isProfessionalBusy || isPatientBusy) {
+            throw new ScheduleUnavailableException("Schedule unavailable for this professional or patient");
+        }
+    }
 	
 }
 	
