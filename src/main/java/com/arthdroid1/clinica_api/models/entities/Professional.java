@@ -5,7 +5,6 @@ import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,19 +16,21 @@ public class Professional implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@NotBlank
 	@Column(name = "name", nullable = false)
 	private String name;
-	@NotBlank
 	@Column(name = "specialty", nullable = false)
 	private String specialty;
+	@Column(name = "registration_number", nullable = false, unique = true)
+	private String registrationNumber;
+	
 
 	public Professional() {
 	}
 
-	public Professional(String name, String specialty) {
+	public Professional(String name, String specialty, String registrationNumber) {
 		this.name = name;
 		this.specialty = specialty;
+		this.registrationNumber = registrationNumber;
 	}
 
 	public String getName() {
@@ -51,10 +52,20 @@ public class Professional implements Serializable {
 	public Long getId() {
 		return id;
 	}
+	
+	
+
+	public String getRegistrationNumber() {
+		return registrationNumber;
+	}
+
+	public void setRegistrationNumber(String registrationNumber) {
+		this.registrationNumber = registrationNumber;
+	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hash(id, registrationNumber);
 	}
 
 	@Override
@@ -66,8 +77,10 @@ public class Professional implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		Professional other = (Professional) obj;
-		return Objects.equals(id, other.id);
+		return Objects.equals(id, other.id) && Objects.equals(registrationNumber, other.registrationNumber);
 	}
+
+
 	
 
 }
