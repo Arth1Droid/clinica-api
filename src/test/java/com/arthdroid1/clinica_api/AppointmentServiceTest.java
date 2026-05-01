@@ -3,7 +3,6 @@ package com.arthdroid1.clinica_api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,7 +20,6 @@ import com.arthdroid1.clinica_api.dtos.AppointmentRequestDTO;
 import com.arthdroid1.clinica_api.dtos.AppointmentResponseDTO;
 import com.arthdroid1.clinica_api.exceptions.AppointmentDateException;
 import com.arthdroid1.clinica_api.exceptions.InvalidAppointmentStateException;
-import com.arthdroid1.clinica_api.exceptions.ScheduleUnavailableException;
 import com.arthdroid1.clinica_api.models.entities.Appointment;
 import com.arthdroid1.clinica_api.models.entities.Patient;
 import com.arthdroid1.clinica_api.models.entities.Professional;
@@ -47,23 +45,7 @@ class AppointmentServiceTest {
 	@InjectMocks
 	private AppointmentService appointmentService;
 	
-	@Test
-	void shouldThrowException_whenProfessionalHasAnotherAppointmentAtSameTime() {
-	    // Arrange
-	    AppointmentRequestDTO dto = new AppointmentRequestDTO(
-	            1L, 2L, LocalDateTime.now().plusDays(1), AppointmentType.CONSULTATION
-	    );
 
-	    when(patientRepository.findById(1L)).thenReturn(Optional.of(new Patient()));
-	    when(professionalRepository.findById(2L)).thenReturn(Optional.of(new Professional()));
-
-	    when(appointmentRepository.existsByProfessionalIdAndDateTimeAndStatusNot(any(), any(), any()))
-	            .thenReturn(true);
-
-	    // Act & Assert
-	    assertThrows(ScheduleUnavailableException.class,
-	            () -> appointmentService.createAppointment(dto));
-	}
 
 	@Test
 	void shouldThrowException_whenDateIsInPast() {

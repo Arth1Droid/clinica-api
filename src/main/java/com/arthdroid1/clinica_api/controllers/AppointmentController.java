@@ -47,5 +47,11 @@ public class AppointmentController {
 		 appointmentService.cancelAppointment(id, request.reason());
 		   return ResponseEntity.noContent().build();
 	}
+	
+	@PatchMapping("/{id}/finish")
+	public ResponseEntity<Void> finish(@PathVariable Long id){
+		 appointmentService.finishAppointment(id);
+		   return ResponseEntity.noContent().build();
+	}
 
 }

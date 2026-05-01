@@ -29,6 +29,8 @@ public class AppointmentService {
 	private final ProfessionalRepository professionalRepository;
 	private final PatientRepository patientRepository;
 	
+	private static final int MIN_INTERVAL_MINUTES = 30;
+	
 	public AppointmentService(AppointmentRepository appointmentRepository, ProfessionalRepository professionalRepository, PatientRepository patientRepository) {
 		this.appointmentRepository = appointmentRepository;
 		this.patientRepository = patientRepository;
@@ -80,6 +82,22 @@ public class AppointmentService {
 		appointmentRepository.save(existentAppointment);
 	}
 	
+	public void finishAppointment(Long id) {
+		Appointment existentAppointment = appointmentRepository.findById(id)
+				.orElseThrow(() -> new AppointmentNotFoundException("Appointment not found"));
+
+		if (existentAppointment.getStatus() != AppointmentStatus.SCHEDULED) {
+			throw new InvalidAppointmentStateException("Only scheduled appointments can be finished.");
+		}
+		
+		if(existentAppointment.getDateTime().isAfter(LocalDateTime.now())) {
+			throw new InvalidAppointmentStateException("Cannot finish appointment before its scheduled time");
+		}
+		existentAppointment.setStatus(AppointmentStatus.FINISHED);
+		appointmentRepository.save(existentAppointment);
+	}
+
+	
 	private void validateDate(LocalDateTime dateTime) {
 		if (!dateTime.isAfter(LocalDateTime.now())) {
             throw new AppointmentDateException("The appointment must be in the future");
@@ -87,16 +105,21 @@ public class AppointmentService {
 	}
 	
 	private void validateAvailability(AppointmentRequestDTO dto, Long profId, Long patientId) {
-        boolean isProfessionalBusy = appointmentRepository.existsByProfessionalIdAndDateTimeAndStatusNot(
-                profId, dto.dateTime(), AppointmentStatus.CANCELED);
 
-        boolean isPatientBusy = appointmentRepository.existsByPatientIdAndDateTimeAndStatusNot(
-                patientId, dto.dateTime(), AppointmentStatus.CANCELED);
+		LocalDateTime start = dto.dateTime().minusMinutes(MIN_INTERVAL_MINUTES);
+		LocalDateTime end = dto.dateTime().plusMinutes(MIN_INTERVAL_MINUTES);
 
-        if (isProfessionalBusy || isPatientBusy) {
-            throw new ScheduleUnavailableException("Schedule unavailable for this professional or patient");
-        }
-    }
+		boolean isProfessionalBusy = appointmentRepository.existsByProfessionalIdAndDateTimeBetweenAndStatusNot(profId,
+				start, end, AppointmentStatus.CANCELED);
+
+		boolean isPatientBusy = appointmentRepository.existsByPatientIdAndDateTimeBetweenAndStatusNot(patientId, start,
+				end, AppointmentStatus.CANCELED);
+
+		if (isProfessionalBusy || isPatientBusy) {
+			throw new ScheduleUnavailableException(
+					"Must respect minimum interval of " + MIN_INTERVAL_MINUTES + " minutes");
+		}
+	}
 	
 }
 	

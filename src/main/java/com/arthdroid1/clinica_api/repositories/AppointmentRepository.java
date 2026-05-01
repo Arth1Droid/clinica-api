@@ -15,8 +15,8 @@ import com.arthdroid1.clinica_api.models.entities.enums.AppointmentStatus;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 	
 	boolean existsByProfessionalIdAndDateTime(Long professionalId, LocalDateTime dateTime);
-	boolean existsByProfessionalIdAndDateTimeAndStatusNot(Long professionalId, LocalDateTime dateTime, AppointmentStatus status);
-	boolean existsByPatientIdAndDateTimeAndStatusNot(Long patientId, LocalDateTime dateTime, AppointmentStatus status );
+	boolean existsByProfessionalIdAndDateTimeBetweenAndStatusNot(Long professionalId, LocalDateTime start, LocalDateTime end, AppointmentStatus status);
+	boolean existsByPatientIdAndDateTimeBetweenAndStatusNot(Long patientId, LocalDateTime start,LocalDateTime end, AppointmentStatus status );
 	
 	@Query("""
 			SELECT ap FROM Appointment ap
