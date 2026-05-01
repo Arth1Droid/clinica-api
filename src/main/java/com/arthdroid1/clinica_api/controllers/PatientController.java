@@ -14,8 +14,11 @@ import com.arthdroid1.clinica_api.dtos.PatientRequestDTO;
 import com.arthdroid1.clinica_api.dtos.PatientResponseDTO;
 import com.arthdroid1.clinica_api.services.PatientService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name="Patients",description="Endpoints for managing patients")
 @RestController
 @RequestMapping("/patients")
 public class PatientController {
@@ -26,12 +29,13 @@ public class PatientController {
 		this.patientService = patientService;
 	}
 	
+	@Operation(summary="Create a new patient")
 	@PostMapping
 	public ResponseEntity<PatientResponseDTO> create(@RequestBody @Valid PatientRequestDTO request){
 		PatientResponseDTO response = patientService.registerPatient(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
-	
+	@Operation(summary="List all patients")
 	@GetMapping
 	public ResponseEntity<List<PatientResponseDTO>> findAll(){
 		return ResponseEntity.ok(patientService.listAllPatients());

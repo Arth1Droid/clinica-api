@@ -14,8 +14,11 @@ import com.arthdroid1.clinica_api.dtos.ProfessionalRequestDTO;
 import com.arthdroid1.clinica_api.dtos.ProfessionalResponseDTO;
 import com.arthdroid1.clinica_api.services.ProfessionalService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@Tag(name="Professionals",description="Endpoints for managing professionals")
 @RestController
 @RequestMapping("/professionals")
 public class ProfessionalController {
@@ -26,12 +29,13 @@ public class ProfessionalController {
 		this.professionalService = professionalService;
 	}
 	
+	@Operation(summary="Create a new professional")
 	@PostMapping
 	public ResponseEntity<ProfessionalResponseDTO> create(@RequestBody @Valid ProfessionalRequestDTO request){
 		ProfessionalResponseDTO response = professionalService.registerProfessional(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
-	
+	@Operation(summary="List all professionals")
 	@GetMapping
 	public ResponseEntity<List<ProfessionalResponseDTO>> findAll(){
 		return ResponseEntity.ok(professionalService.listAllProfessionals());
